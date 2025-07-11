@@ -1,0 +1,9 @@
+(library
+ (name cheap_lang)
+ (wrapped false)
+ (modules parser lexer ast))
+
+(menhir
+ (modules parser))
+
+(ocamllex lexer)
