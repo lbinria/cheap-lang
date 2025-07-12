@@ -1,3 +1,4 @@
+// Heart sprite is decomposed into 4 sprites
 top_left = [
     00001100
     00011110

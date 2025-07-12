@@ -1,8 +1,15 @@
-type expr =
-  | Int of int
-  | Add of expr * expr
-  | Sub of expr * expr
+type var_name = string 
+type register_num = int 
+type variable_binding = var_name * register_num
+
+type expr_list = 
+  | Expr of expr 
+  | ExprList of expr * expr_list
+
+and expr =
   | Clear
+  | VariableBinding of variable_binding
+
 
 (* A simple evaluator for the AST
 let rec eval_expr = function

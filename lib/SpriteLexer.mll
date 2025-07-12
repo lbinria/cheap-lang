@@ -9,6 +9,8 @@ let alpha = ['a'-'z' 'A'-'Z']
 
 rule token = parse
     | [' ' '\t' '\n'] { token lexbuf }  (* skip whitespace *)
+    (* Skip C++-style comments: from '//' to end-of-line *)
+    | "//" [^'\n']*     { token lexbuf }
     | (alpha) (alpha|digit|'_')* as s { VAR_NAME s }
     (* Keywords *)
     | "0"           { INT_BIT 0 }
