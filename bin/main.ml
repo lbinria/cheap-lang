@@ -43,7 +43,10 @@ let () =
         exit 1
       in 
       let lexbuf = Lexing.from_channel in_chan in 
-      let _ = Parser.main Lexer.token lexbuf in 
+      let ast = Parser.main Lexer.token lexbuf in 
+      let t = Ast.transform ast in 
+      let c = Ast.compile t in 
+      Printf.printf "%s\n" c;
       Printf.printf("Program read.");
   end;
      

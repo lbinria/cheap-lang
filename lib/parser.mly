@@ -7,12 +7,12 @@
 %token <string> VAR_NAME 
 %token <int> REGISTER
 %token EOF NEWLINE
-%token CLEAR
+%token CLEAR DRAW_FN
 %token PLUS MINUS
 %left PLUS MINUS
 %token OP_EQ
 %token LPAREN RPAREN LBRACE RBRACE LSQBRA RSQBRA
-%token COLON SEMICOLON
+%token COLON SEMICOLON COMMA
 
 %start <Ast.expr_list> main
 %%
@@ -30,15 +30,21 @@ expr_list:
 
 expr:
   | CLEAR { Clear }
-  | variable_binding { VariableBinding $1 }
+  | assignment { Assignment $1 }
+  | binding { Binding $1 }
+  | DRAW_FN LPAREN var_or_value COMMA var_or_value COMMA VAR_NAME RPAREN { Draw ($3, $5, $7) }
 
 expr_end:
   | SEMICOLON {}
   | NEWLINE {}
 
-variable_binding:
-  | VAR_NAME COLON REGISTER { ($1, 0) }
+binding:
+  | VAR_NAME COLON REGISTER { ($1, $3) }
 
 assignment:
-  | VAR_NAME OP_EQ {}
-  | variable_binding OP_EQ {}
+  | VAR_NAME OP_EQ INT { Assignment ($1, $3) }
+  | binding OP_EQ INT { BindingAssignment ($1, $3) }
+
+var_or_value:
+  | VAR_NAME { Var $1 }
+  | INT { Val $1 }

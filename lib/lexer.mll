@@ -18,6 +18,7 @@ rule token = parse
   | '-'           { MINUS }
   (* Keywords *)
   | "clear"       { CLEAR }
+  | "draw"        { DRAW_FN }
 
   (* | register as n { REGISTER (int_of_string n) } *)
   | "v" ( ['0'-'9'] | "1"[ '0'-'6' ] as n)  { REGISTER (int_of_string n) }
@@ -36,6 +37,7 @@ rule token = parse
 
   | ':'              { COLON }
   | ';'+              { SEMICOLON }
+  | ','+              { COMMA }
   | '\n'+             { NEWLINE }
   (* Other *)
   | eof           { EOF }

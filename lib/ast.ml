@@ -8,35 +8,43 @@ type expr_list =
 
 and expr =
   | Clear
-  | VariableBinding of variable_binding
+  | Assignment of assignment
+  | Binding of variable_binding
+  | Draw of var_or_value * var_or_value * var_name
 
+and var_or_value =
+  | Var of var_name
+  | Val of int
 
-(* A simple evaluator for the AST
-let rec eval_expr = function
-  | Int n      -> n
-  | Add (x,y)  -> eval_expr x + eval_expr y
-  | Sub (x,y)  -> eval_expr x - eval_expr y
-  | Clear -> 0
-  
-let eval_sprites = function 
-  | NoSprites -> 0
-  | Sprite i -> i
+and assignment =
+  | BindingAssignment of variable_binding * int 
+  | Assignment of var_name * int
 
-let eval = function 
-  | Sprites (s, e) -> eval_sprites s + eval_expr e
-  | Program e -> eval_expr e *)
+(* Target: chip hex language *)
+(* http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#Annn *)
+type chip_expr_list = 
+  | ChipExpr of chip_expr 
+  | ChipExprList of chip_expr * chip_expr_list
+and chip_expr = 
+  | CLS (* 00E0 *)
+  | LD_Vx_Byte of int * int (* 3xkk *)
+  | DRW of int * int * int (* Dxyn *)
+  | LD_I_addr (* Annn *)
+  | END
 
-(* Optional: pretty‐printer for debugging *)
-(* let rec to_string_expr = function
-  | Int n     -> string_of_int n
-  | Add (x,y) -> "(" ^ to_string_expr x ^ " + " ^ to_string_expr y ^ ")"
-  | Sub (x,y) -> "(" ^ to_string_expr x ^ " - " ^ to_string_expr y ^ ")"
-  | Clear -> "Clear"
+let rec transform = function 
+  | ExprList (e, l) -> ChipExprList (transform_expr e, transform l)
+  | Expr e -> ChipExpr (transform_expr e)
+and transform_expr = function 
+  | Clear -> CLS
+  | _ -> END
 
-let to_string_sprites = function 
-  | NoSprites -> "NoSprites"
-  | Sprite i -> "Sprite"
-
-let to_string = function
-  | Sprites (s, e) -> to_string_sprites s ^ to_string_expr e
-  | Program expr -> to_string_expr expr *)
+let rec compile = function 
+  | ChipExpr e -> compile_expr e
+  | ChipExprList (e, l) -> compile_expr e ^ compile l
+and compile_expr = function 
+  | CLS -> "00E0"
+  | LD_Vx_Byte (x, kk) -> "6" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | DRW (x, y, n) -> "D" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ Printf.sprintf "%x" n
+  | LD_I_addr -> ""
+  | END -> ""

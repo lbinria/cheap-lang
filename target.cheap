@@ -1,3 +1,11 @@
-clear;;;
-
-
+clear;
+// x : v0 = 24
+// y : v1 = 8
+// draw(top_left, x, y)
+// x : v0 = 32
+// draw(top_right, x, y)
+// x : v0 = 24
+// y : v1 = 16
+// draw(bot_left, x, y)
+// x : v0 = 32
+// draw(bot_right, x, y)
