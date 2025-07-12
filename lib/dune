@@ -1,9 +1,9 @@
 (library
  (name cheap_lang)
  (wrapped false)
- (modules parser lexer ast))
+ (modules parser lexer ast SpriteParser SpriteLexer SpriteAst))
 
 (menhir
- (modules parser))
+ (modules parser SpriteParser))
 
-(ocamllex lexer)
+(ocamllex lexer SpriteLexer)
