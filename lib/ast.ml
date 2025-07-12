@@ -1,18 +1,10 @@
-type root = 
-  | Sprites of sprites * expr
-  | Program of expr 
-and sprites = 
-  | NoSprites
-  | Sprite of int
-
-and expr =
-  
+type expr =
   | Int of int
   | Add of expr * expr
   | Sub of expr * expr
   | Clear
 
-(* A simple evaluator for the AST *)
+(* A simple evaluator for the AST
 let rec eval_expr = function
   | Int n      -> n
   | Add (x,y)  -> eval_expr x + eval_expr y
@@ -25,7 +17,7 @@ let eval_sprites = function
 
 let eval = function 
   | Sprites (s, e) -> eval_sprites s + eval_expr e
-  | Program e -> eval_expr e
+  | Program e -> eval_expr e *)
 
 (* Optional: pretty‐printer for debugging *)
 (* let rec to_string_expr = function

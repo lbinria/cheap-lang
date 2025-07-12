@@ -11,9 +11,6 @@ rule token = parse
   | '-'           { MINUS }
   (* Keywords *)
   | "clear"       { CLEAR }
-  | "sprites"     { SPRITES }
-  | "0x"           { INT_BIT 0 }
-  | "1x"           { INT_BIT 1 }
   | '\n'          { NEWLINE }
 
 	(* Comparison operators *)

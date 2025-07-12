@@ -28,3 +28,6 @@ let rec get_bytes = function
 and get_sprite_bytes = function 
   | Rows (i, r) -> (Printf.sprintf "%02x" i) ^ get_sprite_bytes r
   | Row i -> Printf.sprintf "%02x" i
+
+(* TODO get pos of a sprite by name *)
+(* TODO get length of a sprite by name *)
