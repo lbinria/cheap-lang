@@ -1,6 +1,6 @@
 type var_name = string 
 type register_num = int 
-type variable_binding = var_name * register_num
+
 
 type expr_list = 
   | Expr of expr 
@@ -8,8 +8,8 @@ type expr_list =
 
 and expr =
   | Clear
-  | Assignment of assignment
   | Binding of variable_binding
+  | Assignment of assignment
   | Draw of var_or_value * var_or_value * var_name
 
 and var_or_value =
@@ -17,8 +17,16 @@ and var_or_value =
   | Val of int
 
 and assignment =
-  | BindingAssignment of variable_binding * int 
-  | Assignment of var_name * int
+  | RegAssignment of register_num * int
+  | VarAssignment of var_name * int
+
+and variable_binding = var_name * assignment
+
+type program_data = { 
+  bindings : (var_name, var_or_value) Hashtbl.t;
+  variables : (var_or_value, int) Hashtbl.t;
+  sprite_ast : SpriteAst.sprites;
+}
 
 (* Target: chip hex language *)
 (* http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#Annn *)
@@ -32,12 +40,16 @@ and chip_expr =
   | LD_I_addr (* Annn *)
   | END
 
-let rec transform = function 
-  | ExprList (e, l) -> ChipExprList (transform_expr e, transform l)
-  | Expr e -> ChipExpr (transform_expr e)
-and transform_expr = function 
+let rec transform data = function 
+  | ExprList (e, l) -> ChipExprList (transform_expr data e, transform data l)
+  | Expr e -> ChipExpr (transform_expr data e)
+and transform_expr data = function 
   | Clear -> CLS
+  | Binding (var, a) -> Hashtbl.replace data.bindings var (transform_assignment data a); END
   | _ -> END
+and transform_assignment data = function 
+    | RegAssignment (reg, v) -> Hashtbl.replace data.variables (Val reg) v; Val reg
+    | VarAssignment (var, v) -> Hashtbl.replace data.variables (Var var) v; Var var
 
 let rec compile = function 
   | ChipExpr e -> compile_expr e

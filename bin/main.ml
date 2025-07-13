@@ -15,11 +15,11 @@ let () =
     in 
 
     let lexbuf = Lexing.from_channel in_chan in 
-    let ast = SpriteParser.main SpriteLexer.token lexbuf in 
+    let sprite_ast = SpriteParser.main SpriteLexer.token lexbuf in 
 
-    Printf.printf "N sprites = %d\n" (SpriteAst.count ast);
-    Printf.printf "N bytes = %d\n" (SpriteAst.get_size ast);
-    Printf.printf "%s\n" (SpriteAst.get_bytes ast);
+    Printf.printf "N sprites = %d\n" (SpriteAst.count sprite_ast);
+    Printf.printf "N bytes = %d\n" (SpriteAst.get_size sprite_ast);
+    Printf.printf "%s\n" (SpriteAst.get_bytes sprite_ast);
     (* let ast = 
       try 
         let ast = Parser.main Lexer.token lexbuf in 
@@ -44,10 +44,19 @@ let () =
       in 
       let lexbuf = Lexing.from_channel in_chan in 
       let ast = Parser.main Lexer.token lexbuf in 
-      let t = Ast.transform ast in 
-      let c = Ast.compile t in 
-      Printf.printf "%s\n" c;
-      Printf.printf("Program read.");
+
+      (* Program state and data *)
+      let data : Ast.program_data = {
+        bindings = Hashtbl.create 0; 
+        variables = Hashtbl.create 0; 
+        sprite_ast = sprite_ast
+      } in 
+
+      let chip_ast = Ast.transform data ast in 
+      let hex = Ast.compile chip_ast in 
+      Printf.printf "%s\n" hex;
+
+      Printf.printf("End.");
   end;
      
 

@@ -9,3 +9,14 @@ clear;
 // draw(bot_left, x, y)
 // x : v0 = 32
 // draw(bot_right, x, y)
+
+
+x : V0 = 24
+y : V1 = 8 
+
+V0 = 24 
+
+draw(x, y, s)
+draw(24, 8, s) (* default binding 24 : V0, 8 : V1 *)
+
+draw(_ : V2 = 24, _ : V3 = 8) (* anonymous binding overwrite default binding *)

@@ -6,7 +6,7 @@
 (* Define helper regexes *)
 let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
-let register   = "v" ( ['0'-'9'] | "1"[ '0'-'6' ] )
+let register   = "V" ( ['0'-'9'] | "1"[ '0'-'6' ] )
 
 rule token = parse
   | [' ' '\t'] { token lexbuf }  (* Skip whitespace *)
@@ -21,7 +21,7 @@ rule token = parse
   | "draw"        { DRAW_FN }
 
   (* | register as n { REGISTER (int_of_string n) } *)
-  | "v" ( ['0'-'9'] | "1"[ '0'-'6' ] as n)  { REGISTER (int_of_string n) }
+  | "V" ( ['0'-'9'] | "1"[ '0'-'6' ] as n)  { REGISTER (int_of_string n) }
 
   | (alpha) (alpha|digit|'_')* as s { VAR_NAME s }
 
