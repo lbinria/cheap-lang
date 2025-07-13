@@ -1,5 +1,4 @@
 clear
 x : V0 = 24
 y : V1 = 8
-y = 1
 draw(x, y, top_left)
