@@ -60,6 +60,8 @@ and transform_expr data = function
           LD_Vx_Byte (reg, v)
       )
   
+  (* | Draw (x_param, y_param, sprite) -> END *)
+
   | _ -> END
 
 and transform_assignment data = function 

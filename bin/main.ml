@@ -33,6 +33,24 @@ let () =
         exit 1 *)
     close_in in_chan; 
 
+  (* let my_sprite = SpriteAst.get_sprite "top_right" sprite_ast in 
+  Printf.printf "sprite top_right: %d\n" (SpriteAst.get_sprite_size my_sprite); *)
+
+  (* let all_sprites = SpriteAst.get_sprites_as_list sprite_ast in 
+  let str_sprite_sizes = 
+    List.map (fun (sprite_name, sprite) -> "Sprite " ^ sprite_name ^ " has size of " ^ string_of_int (SpriteAst.get_sprite_size sprite)) 
+    all_sprites 
+  in 
+  Printf.printf (String.concat "\n" str_sprite_sizes); *)
+
+  (* Sprite data display for debug *)
+  let sprites_data = SpriteAst.to_sprites_data_list sprite_ast in 
+
+  Printf.printf "-- Sprite list --\n";
+  List.iter (fun (sprite_data : SpriteAst.sprite_data) -> 
+    Printf.printf "{name = %s, offset = %i, size = %i}\n" sprite_data.name sprite_data.offset sprite_data.size;
+  ) sprites_data;
+
   if Array.length Sys.argv = 3 then begin 
     let filename = Sys.argv.(2) in 
     Printf.printf "Open file: %s\n" filename;
