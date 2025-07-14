@@ -66,8 +66,9 @@ let () =
       (* Program state and data *)
       let data : Ast.program_data = {
         bindings = Hashtbl.create 0; 
+        registers = Array.make 15 0;
         variables = Hashtbl.create 0; 
-        sprite_ast = sprite_ast
+        sprites_data = SpriteAst.list_to_hashtbl sprites_data
       } in 
 
       let chip_ast = Ast.transform data ast in 

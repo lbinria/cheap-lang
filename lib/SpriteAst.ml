@@ -50,10 +50,16 @@ let rec get_sprites_as_list = function
   | Sprite (_, s) -> [s]
   | NoSprites -> []
 
-let rec to_sprites_data_list = function 
-  | Sprites (sprite_name, s, sl) -> { name = sprite_name; offset = 0; size = (get_sprite_size s)} :: (to_sprites_data_list sl)
-  | Sprite (sprite_name, s) -> [{ name = sprite_name; offset = 0; size = (get_sprite_size s)}]
+let to_sprites_data_list (* sl *) =
+  let offset = 0 in  
+  let rec to_sprites_data_list_rec off = function
+  | Sprites (sprite_name, s, sl) -> 
+      let sprite_size = get_sprite_size s in 
+      { name = sprite_name; offset = off; size = sprite_size} :: (to_sprites_data_list_rec (off + sprite_size) sl)
+  | Sprite (sprite_name, s) -> [{ name = sprite_name; offset = off; size = (get_sprite_size s)}]
   | NoSprites -> []
+  in 
+  to_sprites_data_list_rec offset (* sl *)
 
 let list_to_hashtbl records =
   let table = Hashtbl.create (List.length records) in

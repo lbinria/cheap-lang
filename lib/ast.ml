@@ -1,6 +1,7 @@
 type var_name = string 
 type register_num = int 
 
+exception UnbindVariable of string
 
 type expr_list = 
   | Expr of expr 
@@ -24,8 +25,9 @@ and variable_binding = var_name * assignment
 
 type program_data = { 
   bindings : (var_name, var_or_value) Hashtbl.t;
+  registers : int array;
   variables : (var_or_value, int) Hashtbl.t;
-  sprite_ast : SpriteAst.sprites;
+  sprites_data : SpriteAst.sprites_data;
 }
 
 (* Target: chip hex language *)
@@ -40,6 +42,16 @@ and chip_expr =
   | LD_I_addr of int (* Annn *)
   | END
 
+let rec get_reg_of_var data var_name = 
+
+  let val_or_reg_opt = Hashtbl.find_opt data.bindings var_name in 
+  match val_or_reg_opt with 
+  | Some (Val reg) -> reg
+  | Some (Var var) -> get_reg_of_var data var
+  | None -> raise (UnbindVariable ("Unbind variable " ^ var_name ^ "."))
+
+
+
 let rec transform data = function 
   | ExprList (e, l) -> ChipExprList (transform_expr data e, transform data l)
   | Expr e -> ChipExpr (transform_expr data e)
@@ -48,31 +60,23 @@ and transform_expr data = function
   | Clear -> CLS
   | Binding (var, a) -> 
 
-      (match (transform_assignment data a) with
+      (match a with
       | RegAssignment (reg, v) -> 
           Hashtbl.replace data.bindings var (Val reg);
+          Array.set data.registers reg v;
           LD_Vx_Byte (reg, v)
 
       | VarAssignment (var, v) ->
           Hashtbl.replace data.bindings var (Var var);
           (* Search reg from variable *)
-          let reg = 0 in 
+          let reg = get_reg_of_var data var in 
+          Array.set data.registers reg v;
           LD_Vx_Byte (reg, v)
       )
   
   (* | Draw (x_param, y_param, sprite) -> END *)
 
   | _ -> END
-
-and transform_assignment data = function 
-    | RegAssignment (reg, v) as x -> 
-        Hashtbl.replace data.variables (Val reg) v; 
-        x
-        (* (LD_Vx_Byte (reg, v), Val reg) *)
-
-    | VarAssignment (var, v) as x -> 
-      Hashtbl.replace data.variables (Var var) v; 
-      x
       
 
 (* Compile chip AST (transform to hex string) *)
