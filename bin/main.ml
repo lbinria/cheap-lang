@@ -67,11 +67,13 @@ let () =
       let data : Ast.program_data = {
         bindings = Hashtbl.create 0; 
         registers = Array.make 15 0;
-        variables = Hashtbl.create 0; 
         sprites_data = SpriteAst.list_to_hashtbl sprites_data
       } in 
 
+      Printf.printf "Go convert.\n";
+
       let chip_ast = Ast.transform data ast in 
+      Printf.printf "cheap AST converted to chip AST.\n";
       let hex = Ast.compile chip_ast in 
       Printf.printf "%s\n" hex;
 
