@@ -16,8 +16,12 @@ type sprite_data = {
   size : int;
 }
 
-type sprites_data = (string, sprite_data) Hashtbl.t
+(* type sprites_data = (string, sprite_data) Hashtbl.t *)
 
+type sprites_data = {
+  size : int;
+  sprites_data_tbl : (string, sprite_data) Hashtbl.t;
+}
 
 
 
@@ -80,5 +84,25 @@ let rec get_sprite name = function
       else raise (InvalidSprite ("Sprite " ^ name ^ " doesn't exists."));
   | NoSprites -> raise (InvalidSprite ("Sprite " ^ name ^ " doesn't exists."));
 
-(* TODO get pos of a sprite by name *)
-(* TODO get length of a sprite by name *)
+
+
+  (* Function to convert a hex string to a byte array
+let hex_string_to_bytes hex =
+  let len = String.length hex in
+  let bytes = Bytes.create (len / 2) in
+  let rec aux i =
+    if i < len then (
+      let byte_str = String.sub hex i 2 in
+      let byte = int_of_string ("0x" ^ byte_str) in
+      Bytes.set bytes (i / 2) (char_of_int byte);
+      aux (i + 2)
+    )
+  in
+  aux 0;
+  bytes
+
+(* Function to write bytes to a file *)
+let write_bytes_to_file filename bytes =
+  let oc = open_out_bin filename in
+  output oc bytes 0 (Bytes.length bytes);
+  close_out oc *)

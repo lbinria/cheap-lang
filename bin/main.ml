@@ -1,3 +1,20 @@
+let hex_to_bytes hex_str =
+  let len = String.length hex_str in
+  if len mod 2 <> 0 then
+    invalid_arg "hex_to_bytes: hex string must have an even length";
+  
+  let bytes = Bytes.create (len / 2) in
+  let rec aux i =
+    if i < len then (
+      let byte_str = String.sub hex_str i 2 in
+      let byte = int_of_string ("0x" ^ byte_str) in
+      Bytes.set bytes (i / 2) (char_of_int byte);
+      aux (i + 2)
+    )
+  in
+  aux 0;
+  bytes
+
 let () = 
   if Array.length Sys.argv < 2 then begin 
     prerr_endline "Error a cheap file is expected";
@@ -44,12 +61,12 @@ let () =
   Printf.printf (String.concat "\n" str_sprite_sizes); *)
 
   (* Sprite data display for debug *)
-  let sprites_data = SpriteAst.to_sprites_data_list sprite_ast in 
+  let sprites_data_list = SpriteAst.to_sprites_data_list sprite_ast in 
 
   Printf.printf "-- Sprite list --\n";
   List.iter (fun (sprite_data : SpriteAst.sprite_data) -> 
     Printf.printf "{name = %s, offset = %i, size = %i}\n" sprite_data.name sprite_data.offset sprite_data.size;
-  ) sprites_data;
+  ) sprites_data_list;
 
   if Array.length Sys.argv = 3 then begin 
     let filename = Sys.argv.(2) in 
@@ -63,19 +80,55 @@ let () =
       let lexbuf = Lexing.from_channel in_chan in 
       let ast = Parser.main Lexer.token lexbuf in 
 
+      let sprites_data : SpriteAst.sprites_data = {
+        size = SpriteAst.get_size sprite_ast;
+        sprites_data_tbl = SpriteAst.list_to_hashtbl sprites_data_list;
+      } in
+
       (* Program state and data *)
       let data : Ast.program_data = {
         bindings = Hashtbl.create 0; 
         registers = Array.make 15 0;
-        sprites_data = SpriteAst.list_to_hashtbl sprites_data
+        sprites_data = sprites_data
       } in 
 
       Printf.printf "Go convert.\n";
 
-      let chip_ast = Ast.transform data ast in 
+      let chip_instructions_list = Ast.transform data ast in 
       Printf.printf "cheap AST converted to chip AST.\n";
-      let hex = Ast.compile chip_ast in 
+      let hex = Ast.compile chip_instructions_list in 
+      let program_length = (String.length hex) / 2 in 
+      Printf.printf "Program length: %i\n" program_length;
       Printf.printf "%s\n" hex;
+
+      Printf.printf "Program bytes: %i\n" ((String.length hex) / 2);
+      Printf.printf "Sprite bytes: %i\n" (String.length (SpriteAst.get_bytes sprite_ast) / 2);
+      
+      (* let repeat_char c n =
+        let rec aux acc n =
+          if n <= 0 then acc
+          else aux (acc ^ String.make 1 c) (n - 1)
+        in
+        aux "" n
+      in  *)
+      
+      (* Fill start of the program of 512 bytes *)
+      (* let str_fill = repeat_char '0' (512 * 2) in  *)
+      (* Get all program string *)
+      (* let str_program = str_fill ^ hex ^ (SpriteAst.get_bytes sprite_ast) in *)
+      let str_program = hex ^ (SpriteAst.get_bytes sprite_ast) in
+      Printf.printf "All program bytes: %i\n" ((String.length str_program) / 2);
+      Printf.printf "%s\n" str_program;
+
+      let byte_array = hex_to_bytes str_program in
+      Printf.printf "Bytes: %s\n" (Bytes.to_string byte_array);
+
+      let write_bytes_to_file filename bytes =
+        let f = open_out filename in
+        output f bytes 0 (Bytes.length bytes);
+        close_out f
+      in 
+      write_bytes_to_file "out.ch8" byte_array;
 
       Printf.printf("End.");
   end;
