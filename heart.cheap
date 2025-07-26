@@ -12,3 +12,7 @@ draw(x, y, bot_left)
 x : V0 = 32
 draw(x, y, bot_right)
 
+x : V0 = 0
+y : V1 = 0
+
+if (x = 32) 

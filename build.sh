@@ -1,0 +1,1 @@
+dune exec cheap-lang heart.sprites heart.cheap

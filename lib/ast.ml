@@ -2,8 +2,8 @@ type var_name = string
 type register_num = int 
 
 exception UnbindVariable of string
-
 exception InvalidSprite of string
+exception MalformedCondition of string
 
 type expr_list = 
   | Expr of expr 
@@ -14,6 +14,7 @@ and expr =
   | Binding of variable_binding
   | Assignment of assignment
   | Draw of var_or_value * var_or_value * var_name
+  | Conditional_expr of conditional_expr
 
 and var_or_value =
   | Var of var_name
@@ -22,6 +23,14 @@ and var_or_value =
 and assignment =
   | RegAssignment of register_num * int
   | VarAssignment of var_name * int
+
+and conditional_expr = 
+  | Single_statement of bool_expr * expr
+  | Multi_statement of bool_expr * expr_list
+
+and bool_expr = 
+  | Eq of var_or_value * var_or_value
+  | Neq of var_or_value * var_or_value
 
 and variable_binding = var_name * assignment
 
@@ -38,10 +47,15 @@ type chip_expr_list =
   | ChipExprList of chip_expr * chip_expr_list
 and chip_expr = 
   | CLS (* 00E0 *)
-  | LD_Vx_Byte of register_num * int (* 3xkk *)
+  | CALL of int (* 2nnn *)
+  | SE_Vx_Byte of register_num * int (* 3xkk *)
+  | SNE_Vx_Byte of register_num * int (* 4xkk *)
+  | SE_Vx_Vy of register_num * register_num (* 5xkk *)
+  | LD_Vx_Byte of register_num * int (* 6xkk *)
+  | SNE_Vx_Vy of register_num * register_num (* 9xkk *)
   | DRW of register_num * register_num * int (* Dxyn *)
   | LD_I_addr of int (* Annn *)
-  | END
+  | JP of int (* 1nnn *)
 
 let rec get_reg_of_var data var_name = 
 
@@ -59,7 +73,7 @@ let rec transform data = function
       let a = transform_expr data e in 
       let b = transform data l in 
       a @ b
-  | Expr e -> transform_expr data e @ [END]
+  | Expr e -> transform_expr data e
 
 and transform_expr data = function 
   | Clear -> Printf.printf "Clear !\n"; [CLS]
@@ -97,14 +111,32 @@ and transform_expr data = function
     (match sprite_data_opt with 
     | Some sprite_data ->
       Printf.printf "offset: %i" (sprite_data.offset);
-      [LD_I_addr (sprite_data.offset);
-      (* [LD_I_addr (4096 - sprites_data.size + sprite_data.offset); *)
+      [LD_I_addr (512 + sprite_data.offset);
       DRW (x_reg, y_reg, sprite_data.size)]
     | None -> raise (InvalidSprite ("Sprite " ^ sprite_name ^ " not found.\n"));
     )
 
-  | _ -> [END]
+  | Conditional_expr expr -> transform_conditional_expr data expr
 
+  | _ -> []
+
+and transform_conditional_expr data = function 
+  | Single_statement (bool_expr, expr) -> 
+      let converted_exprs = transform_expr data expr in 
+      let plop = 
+        match (List.length converted_exprs) with 
+        | 1 -> List.nth converted_exprs 0
+        | _ -> CALL 0 (* TODO replace adress, should return subroutines *)
+      in 
+      [transform_bool_expr data bool_expr; plop]
+  | Multi_statement (_, _) -> [CLS] (* TODO modify ! not cls here maybe not multiple / single statements *)
+
+and transform_bool_expr data = function 
+  | Eq (Var vx, Val v) -> SNE_Vx_Byte (get_reg_of_var data vx, v)
+  | Eq (Var vx, Var vy) -> SNE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)
+  | Neq (Var vx, Val v) -> SE_Vx_Byte (get_reg_of_var data vx, v)
+  | Neq (Var vx, Var vy) -> SE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)
+  | _ -> raise (MalformedCondition ("Cannot compare two values in condition."))
 
     
 (* Compile chip AST (transform to hex string) *)
@@ -118,4 +150,5 @@ and compile_expr sprites_offset = function
   | LD_Vx_Byte (x, kk) -> "6" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
   | DRW (x, y, n) -> "D" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ Printf.sprintf "%x" n
   | LD_I_addr nnn -> "A" ^ Printf.sprintf "%03x" (nnn + sprites_offset)
-  | END -> "0000"
+  | JP nnn -> "1" ^ Printf.sprintf "%03x" nnn
+  | _-> ""

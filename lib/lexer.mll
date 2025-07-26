@@ -19,6 +19,7 @@ rule token = parse
   (* Keywords *)
   | "clear"       { CLEAR }
   | "draw"        { DRAW_FN }
+  | "if"        { IF }
 
   (* | register as n { REGISTER (int_of_string n) } *)
   | "V" ( ['0'-'9'] | "1"[ '0'-'6' ] as n)  { REGISTER (int_of_string n) }
@@ -26,7 +27,9 @@ rule token = parse
   | (alpha) (alpha|digit|'_')* as s { VAR_NAME s }
 
 	(* Comparison operators *)
-	| '='              { OP_EQ }
+	| "=="              { OP_EQ }
+	| "!="              { OP_NEQ }
+  | '='               { OP_ASS }
 	(* Parentheses and the like *)
 	| '('              { LPAREN }
 	| ')'              { RPAREN }

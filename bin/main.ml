@@ -95,6 +95,10 @@ let () =
       Printf.printf "Go convert.\n";
 
       let chip_instructions_list = Ast.transform data ast in 
+      let nb_instructions = List.length chip_instructions_list in 
+      (* Add end program instruction, infinite loop on jump *)
+      let chip_instructions_list = chip_instructions_list @ [JP (512 + nb_instructions * 2)] in 
+      Printf.printf "Nb instruction: %i\n" (nb_instructions + 1);
       Printf.printf "cheap AST converted to chip AST.\n";
       let hex = Ast.compile chip_instructions_list in 
       let program_length = (String.length hex) / 2 in 
