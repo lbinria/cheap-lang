@@ -9,10 +9,7 @@ draw(x, y, top_right)
 x : V0 = 24; y : V1 = 16
 draw(x, y, bot_left)
 
+if (x == 24) draw(x, y, bob)
+
 x : V0 = 32
-draw(x, y, bot_right)
-
-x : V0 = 0
-y : V1 = 0
-
-if (x = 32) 
+draw(x, y, bot_right);

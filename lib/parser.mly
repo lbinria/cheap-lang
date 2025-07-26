@@ -21,12 +21,8 @@ main:
   | expr_list EOF { $1 }
 
 expr_list:
-  | expr NEWLINE expr_list { ExprList($1, $3) }
-  | expr SEMICOLON expr_list { ExprList($1, $3) }
-  | expr { Expr $1 }
-  | expr SEMICOLON { Expr $1 }
-  | expr SEMICOLON NEWLINE { Expr $1 }
-  | expr NEWLINE { Expr $1 }
+  | expr expr_terminator { Expr $1 }
+  | expr expr_terminator expr_list { ExprList ($1, $3) }
 
 expr:
   | CLEAR { Clear }
@@ -36,7 +32,9 @@ expr:
   | conditional_expr { Conditional_expr $1 }
 
 
-expr_end:
+expr_terminator:
+  | SEMICOLON expr_terminator {}
+  | NEWLINE expr_terminator {}
   | SEMICOLON {}
   | NEWLINE {}
 
@@ -52,8 +50,8 @@ parameter_binding:
   | var_or_value COLON assignment {}
 
 conditional_expr:
-  | IF LPAREN bool_expr RPAREN expr expr_end { Single_statement ($3, $5) }
-  | IF LPAREN bool_expr RPAREN LBRACE expr_list expr_end RBRACE { Multi_statement ($3, $6) }
+  | IF LPAREN bool_expr RPAREN expr { Single_statement ($3, $5) }
+  | IF LPAREN bool_expr RPAREN LBRACE expr_list RBRACE { Multi_statement ($3, $6) }
 
 bool_expr:
   | var_or_value OP_EQ var_or_value { Eq ($1, $3) }

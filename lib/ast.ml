@@ -4,6 +4,7 @@ type register_num = int
 exception UnbindVariable of string
 exception InvalidSprite of string
 exception MalformedCondition of string
+exception NotImplemented
 
 type expr_list = 
   | Expr of expr 
@@ -47,15 +48,39 @@ type chip_expr_list =
   | ChipExprList of chip_expr * chip_expr_list
 and chip_expr = 
   | CLS (* 00E0 *)
+  | RET (* 00EE *)
+  | JP of int (* 1nnn *)
   | CALL of int (* 2nnn *)
   | SE_Vx_Byte of register_num * int (* 3xkk *)
   | SNE_Vx_Byte of register_num * int (* 4xkk *)
-  | SE_Vx_Vy of register_num * register_num (* 5xkk *)
+  | SE_Vx_Vy of register_num * register_num (* 5xy0 *)
   | LD_Vx_Byte of register_num * int (* 6xkk *)
+  | ADD_Vx_Byte of register_num * int (* 7xkk *)
+  | LD_Vx_Vy of  register_num * register_num (* 8xy0 *)
+  | OR_Vx_Vy of  register_num * register_num (* 8xy1 *)
+  | AND_Vx_Vy of register_num * register_num (* 8xy2 *)
+  | XOR_Vx_Vy of register_num * register_num (* 8xy3 *)
+  | ADD_Vx_Vy of register_num * register_num (* 8xy4 *)
+  | SUB_Vx_Vy of register_num * register_num (* 8xy5 *)
+  | SHR_Vx_Vy of register_num * register_num (* 8xy6 *)
+  | SUBN_Vx_Vy of register_num * register_num (* 8xy7 *)
+  | SHL_Vx_Vy of register_num * register_num (* 8xyE *)
   | SNE_Vx_Vy of register_num * register_num (* 9xkk *)
-  | DRW of register_num * register_num * int (* Dxyn *)
   | LD_I_addr of int (* Annn *)
-  | JP of int (* 1nnn *)
+  | JP_V0_addr of int (* Bnnn *)
+  | RND_Vx_Byte of register_num * int (* Cxkk *)
+  | DRW of register_num * register_num * int (* Dxyn *)
+  | SKP_Vx of register_num (* Ex9E *)
+  | SKNP_Vx of register_num (* ExA1 *)
+  | LD_Vx_DT of register_num (* Fx07 *)
+  | LD_Vx_K of register_num (* Fx0A *)
+  | LD_DT_Vx of register_num (* Fx15 *)
+  | LD_ST_Vx of register_num (* Fx18 *)
+  | ADD_I_Vx of register_num (* Fx1E *)
+  | LD_F_Vx of register_num (* Fx29 *)
+  | LD_B_Vx of register_num (* Fx33 *)
+  | LD_I_Vx of register_num (* Fx55 *)
+  | LD_Vx_I of register_num (* Fx65 *)
 
 let rec get_reg_of_var data var_name = 
 
@@ -147,8 +172,41 @@ let rec compile l =
 
 and compile_expr sprites_offset = function 
   | CLS -> "00E0"
-  | LD_Vx_Byte (x, kk) -> "6" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
-  | DRW (x, y, n) -> "D" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ Printf.sprintf "%x" n
-  | LD_I_addr nnn -> "A" ^ Printf.sprintf "%03x" (nnn + sprites_offset)
+  | RET -> "00EE"
   | JP nnn -> "1" ^ Printf.sprintf "%03x" nnn
-  | _-> ""
+  | CALL _ -> raise NotImplemented
+  | SE_Vx_Byte (x, kk) -> "3" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | SNE_Vx_Byte (x, kk) -> "4" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | SE_Vx_Vy (x, y) -> "5" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | LD_Vx_Byte (x, kk) -> "6" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | ADD_Vx_Byte (x, kk) -> "7" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | LD_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | OR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "1"
+  | AND_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "2"
+  | XOR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "3"
+  | ADD_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "4"
+  | SUB_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "5"
+  | SHR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "6"
+  | SUBN_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "7"
+  | SHL_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "E"
+  | SNE_Vx_Vy (x, y) -> "9" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | LD_I_addr nnn -> "A" ^ Printf.sprintf "%03x" (nnn + sprites_offset)
+  | JP_V0_addr nnn -> "B" ^ Printf.sprintf "%03x" nnn
+  | RND_Vx_Byte (x, kk) -> "C" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | DRW (x, y, n) -> "D" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ Printf.sprintf "%x" n
+  | SKP_Vx x -> "E" ^ Printf.sprintf "%x" x ^ "9E"
+  | SKNP_Vx x -> "E" ^ Printf.sprintf "%x" x ^ "A1"
+  | LD_Vx_DT x -> "F" ^ Printf.sprintf "%x" x ^ "07"
+  | LD_Vx_K x -> "F" ^ Printf.sprintf "%x" x ^ "0A"
+  | LD_DT_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "15" 
+  | LD_ST_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "18" 
+  | ADD_I_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "1E" 
+  | LD_F_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "29" 
+  | LD_B_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "33" 
+  | LD_I_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "55" 
+  | LD_Vx_I x -> "F" ^ Printf.sprintf "%x" x ^ "65" 
+
+
+  
+  
+
