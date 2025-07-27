@@ -89,7 +89,8 @@ let () =
       let data : Ast.program_data = {
         bindings = Hashtbl.create 0; 
         registers = Array.make 15 0;
-        sprites_data = sprites_data
+        sprites_data = sprites_data;
+        subroutines = ref [];
       } in 
 
       Printf.printf "Go convert.\n";
@@ -98,15 +99,18 @@ let () =
       let nb_instructions = List.length chip_instructions_list in 
       (* Add end program instruction, infinite loop on jump *)
       let chip_instructions_list = chip_instructions_list @ [JP (512 + nb_instructions * 2)] in 
-      Printf.printf "Nb instruction: %i\n" (nb_instructions + 1);
-      Printf.printf "cheap AST converted to chip AST.\n";
-      let hex = Ast.compile chip_instructions_list in 
-      let program_length = (String.length hex) / 2 in 
-      Printf.printf "Program length: %i\n" program_length;
-      Printf.printf "%s\n" hex;
 
-      Printf.printf "Program bytes: %i\n" ((String.length hex) / 2);
-      Printf.printf "Sprite bytes: %i\n" (String.length (SpriteAst.get_bytes sprite_ast) / 2);
+      (* Printf.printf "Nb instruction: %i\n" (nb_instructions + 1);
+      Printf.printf "cheap AST converted to chip AST.\n"; *)
+      
+      let hex = Ast.compile 512 chip_instructions_list in 
+
+      (* let program_length = (String.length hex) / 2 in  *)
+      (* Printf.printf "Program length: %i\n" program_length;
+      Printf.printf "%s\n" hex; *)
+
+      (* Printf.printf "Program bytes: %i\n" ((String.length hex) / 2);
+      Printf.printf "Sprite bytes: %i\n" (String.length (SpriteAst.get_bytes sprite_ast) / 2); *)
       
       (* let repeat_char c n =
         let rec aux acc n =
@@ -116,16 +120,13 @@ let () =
         aux "" n
       in  *)
       
-      (* Fill start of the program of 512 bytes *)
-      (* let str_fill = repeat_char '0' (512 * 2) in  *)
-      (* Get all program string *)
-      (* let str_program = str_fill ^ hex ^ (SpriteAst.get_bytes sprite_ast) in *)
       let str_program = hex ^ (SpriteAst.get_bytes sprite_ast) in
-      Printf.printf "All program bytes: %i\n" ((String.length str_program) / 2);
+
+      (* Printf.printf "All program bytes: %i\n" ((String.length str_program) / 2); *)
       Printf.printf "%s\n" str_program;
 
       let byte_array = hex_to_bytes str_program in
-      Printf.printf "Bytes: %s\n" (Bytes.to_string byte_array);
+      (* Printf.printf "Bytes: %s\n" (Bytes.to_string byte_array); *)
 
       let write_bytes_to_file filename bytes =
         let f = open_out filename in
