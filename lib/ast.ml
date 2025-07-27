@@ -194,8 +194,8 @@ let rec compile program_offset (* default = 512 *) l =
 and compile_expr program_offset sprites_offset subroutines_offset = function 
   | CLS -> "00E0"
   | RET -> "00EE"
-  | JP nnn -> "1" ^ Printf.sprintf "%03x" nnn
-  | CALL nnn -> "2" ^ Printf.sprintf "%03x" (nnn + subroutines_offset)
+  | JP nnn -> "1" ^ Printf.sprintf "%03x" (nnn + program_offset)
+  | CALL nnn -> "2" ^ Printf.sprintf "%03x" (nnn + subroutines_offset + program_offset)
   | SE_Vx_Byte (x, kk) -> "3" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
   | SNE_Vx_Byte (x, kk) -> "4" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
   | SE_Vx_Vy (x, y) -> "5" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
