@@ -50,15 +50,6 @@ let () =
         exit 1 *)
     close_in in_chan; 
 
-  (* let my_sprite = SpriteAst.get_sprite "top_right" sprite_ast in 
-  Printf.printf "sprite top_right: %d\n" (SpriteAst.get_sprite_size my_sprite); *)
-
-  (* let all_sprites = SpriteAst.get_sprites_as_list sprite_ast in 
-  let str_sprite_sizes = 
-    List.map (fun (sprite_name, sprite) -> "Sprite " ^ sprite_name ^ " has size of " ^ string_of_int (SpriteAst.get_sprite_size sprite)) 
-    all_sprites 
-  in 
-  Printf.printf (String.concat "\n" str_sprite_sizes); *)
 
   (* Sprite data display for debug *)
   let sprites_data_list = SpriteAst.to_sprites_data_list sprite_ast in 
@@ -98,12 +89,17 @@ let () =
       let chip_instructions_list = Ast.transform data ast in 
       let nb_instructions = List.length chip_instructions_list in 
       (* Add end program instruction, infinite loop on jump *)
+      (* TODO do that in compile AST by adding union END *)
       let chip_instructions_list = chip_instructions_list @ [JP (512 + nb_instructions * 2)] in 
 
       (* Printf.printf "Nb instruction: %i\n" (nb_instructions + 1);
       Printf.printf "cheap AST converted to chip AST.\n"; *)
       
-      let hex = Ast.compile 512 chip_instructions_list in 
+      (* Compile main program *)
+      let hex = Ast.compile 512 data sprite_ast chip_instructions_list in 
+
+      (* Compile subroutines *)
+      (* let subroutines_bytes_str = List.map (Ast.compile 512) program_data.subroutines] *)
 
       (* let program_length = (String.length hex) / 2 in  *)
       (* Printf.printf "Program length: %i\n" program_length;
@@ -120,7 +116,8 @@ let () =
         aux "" n
       in  *)
       
-      let str_program = hex ^ (SpriteAst.get_bytes sprite_ast) in
+      (* let str_program = hex ^ (SpriteAst.get_bytes sprite_ast) in *)
+      let str_program = hex in 
 
       (* Printf.printf "All program bytes: %i\n" ((String.length str_program) / 2); *)
       Printf.printf "%s\n" str_program;

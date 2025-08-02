@@ -81,6 +81,7 @@ and chip_expr =
 
 type subroutine = {
   offset: int;
+  length: int;
   instructions: chip_expr list;
 }
 
@@ -163,17 +164,52 @@ and transform_conditional_expr data = function
         | 1 -> List.nth converted_exprs 0
         | _ -> 
           (* TODO compute offset *)
-          let offset = 0 in 
+          let last_subroutine_opt = List.nth_opt !(data.subroutines) 0 in 
+
+          let offset = 
+            match last_subroutine_opt with 
+            | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+            | None -> 0
+          in 
+
+          Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1);
+          
           let subroutine = {
             offset = offset;
+            length = (List.length converted_exprs) + 1 (* Add RET *);
             instructions = converted_exprs @ [RET];
           } in 
+
           data.subroutines := subroutine :: !(data.subroutines);
           (* let data = { data with subroutines = subroutine :: data.subroutines } in  *)
           CALL offset
       in 
       [transform_bool_expr data bool_expr; plop]
-  | Multi_statement (_, _) -> [CLS] (* TODO modify ! not cls here maybe not multiple / single statements *)
+  | Multi_statement (bool_expr, expr_list) ->
+      let converted_exprs = transform data expr_list in 
+      let plop = 
+          (* TODO compute offset *)
+          let last_subroutine_opt = List.nth_opt !(data.subroutines) 0 in 
+
+          let offset = 
+            match last_subroutine_opt with 
+            | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+            | None -> 0
+          in 
+
+          Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1);
+          
+          let subroutine = {
+            offset = offset;
+            length = (List.length converted_exprs) + 1 (* Add RET *);
+            instructions = converted_exprs @ [RET];
+          } in 
+
+          data.subroutines := subroutine :: !(data.subroutines);
+          (* let data = { data with subroutines = subroutine :: data.subroutines } in  *)
+          CALL offset
+      in 
+      [transform_bool_expr data bool_expr; plop]
 
 and transform_bool_expr data = function 
   | Eq (Var vx, Val v) -> SNE_Vx_Byte (get_reg_of_var data vx, v)
@@ -184,16 +220,25 @@ and transform_bool_expr data = function
 
     
 (* Compile chip AST (transform to hex string) *)
-let rec compile program_offset (* default = 512 *) l =  
+let rec compile program_offset data sprite_ast (* default = 512 *) l =  
     (* offset of sprites in bytes *)
-    let sprites_offset = (List.length l) * 2 in
+    let sprites_offset = (List.length l) * 2 (* Each instruction is 2 bytes *) in
+    (* Compile sprites *)
+    let sprites_bytes_str = SpriteAst.get_bytes sprite_ast in 
     (* compute subroutines offset in bytes *)
-    let subroutines_offset = 0 in
+    let sprites_len = (String.length sprites_bytes_str) / 2 in
+    let subroutines_offset = sprites_offset + sprites_len in
+    
+    let compile_subroutine subroutine = String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) subroutine.instructions) in 
+    let subroutines_bytes_str = String.concat "" (List.map compile_subroutine !(data.subroutines)) in 
+
     String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) l)
+    ^ sprites_bytes_str
+    ^ subroutines_bytes_str
 
 and compile_expr program_offset sprites_offset subroutines_offset = function 
   | CLS -> "00E0"
-  | RET -> "00EE"
+  | RET -> Printf.printf "RETURN"; "00EE"
   | JP nnn -> "1" ^ Printf.sprintf "%03x" (nnn + program_offset)
   | CALL nnn -> "2" ^ Printf.sprintf "%03x" (nnn + subroutines_offset + program_offset)
   | SE_Vx_Byte (x, kk) -> "3" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
