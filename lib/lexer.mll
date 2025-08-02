@@ -9,7 +9,7 @@ let alpha = ['a'-'z' 'A'-'Z']
 let register   = "V" ( ['0'-'9'] | "1"[ '0'-'6' ] )
 
 rule token = parse
-  | [' ' '\t'] { token lexbuf }  (* Skip whitespace *)
+  | [' ' '\t' '\n'] { token lexbuf }  (* Skip whitespace *)
   | "//" [^'\n']*     { token lexbuf } (* Skip C++-style comments: from '//' to end-of-line *)
 
 
@@ -41,7 +41,6 @@ rule token = parse
   | ':'              { COLON }
   | ';'+              { SEMICOLON }
   | ','+              { COMMA }
-  | '\n'+             { NEWLINE }
   (* Other *)
   | eof           { EOF }
   | _             { failwith "Unexpected character" }

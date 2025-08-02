@@ -86,11 +86,25 @@ let () =
 
       Printf.printf "Go convert.\n";
 
+
+
+
+
       let chip_instructions_list = Ast.transform data ast in 
       let nb_instructions = List.length chip_instructions_list in 
       (* Add end program instruction, infinite loop on jump *)
       (* TODO do that in compile AST by adding union END *)
       let chip_instructions_list = chip_instructions_list @ [JP (512 + nb_instructions * 2)] in 
+
+      (* Print program in assembly *)
+      let s = Ast.chip_to_string chip_instructions_list in 
+      Printf.printf "%s\n\n" s;
+      (* Print subroutines in assembly *)
+      List.iter (fun (sr : Ast.subroutine) ->
+        let s = Ast.chip_to_string sr.instructions in 
+        Printf.printf "--- Subroutine ---: %i\n" sr.offset;
+        Printf.printf "%s\n\n" s;
+      ) !(data.subroutines);
 
       (* Printf.printf "Nb instruction: %i\n" (nb_instructions + 1);
       Printf.printf "cheap AST converted to chip AST.\n"; *)
@@ -98,29 +112,7 @@ let () =
       (* Compile main program *)
       let hex = Ast.compile 512 data sprite_ast chip_instructions_list in 
 
-      (* Compile subroutines *)
-      (* let subroutines_bytes_str = List.map (Ast.compile 512) program_data.subroutines] *)
-
-      (* let program_length = (String.length hex) / 2 in  *)
-      (* Printf.printf "Program length: %i\n" program_length;
-      Printf.printf "%s\n" hex; *)
-
-      (* Printf.printf "Program bytes: %i\n" ((String.length hex) / 2);
-      Printf.printf "Sprite bytes: %i\n" (String.length (SpriteAst.get_bytes sprite_ast) / 2); *)
-      
-      (* let repeat_char c n =
-        let rec aux acc n =
-          if n <= 0 then acc
-          else aux (acc ^ String.make 1 c) (n - 1)
-        in
-        aux "" n
-      in  *)
-      
-      (* let str_program = hex ^ (SpriteAst.get_bytes sprite_ast) in *)
       let str_program = hex in 
-
-      (* Printf.printf "All program bytes: %i\n" ((String.length str_program) / 2); *)
-      Printf.printf "%s\n" str_program;
 
       let byte_array = hex_to_bytes str_program in
       (* Printf.printf "Bytes: %s\n" (Bytes.to_string byte_array); *)

@@ -1,25 +1,30 @@
-clear
+clear;
 
-x : V0 = 24; y : V1 = 8
-draw(x, y, top_left)
+x : V0 = 24; y : V1 = 8;
+draw(x, y, top_left);
 
-x : V0 = 32
-draw(x, y, top_right)
+x : V0 = 32;
+draw(x, y, top_right);
 
-x : V0 = 24; y : V1 = 16
-draw(x, y, bot_left)
+x : V0 = 24; y : V1 = 16;
+draw(x, y, bot_left);
 
-if (x == 24) { draw(x, y, bob)
-    x : V0 = 0
-    y : V1 = 0
-    draw(x, y, bob)
-y:V1=16;}
+if (x == 24) {
+    draw(x, y, bob);
+    x : V0 = 0;
+    y : V1 = 0;
+    draw(x, y, bob);
+}
 
-x : V0 = 32
+//if (x == 0) {
+//    if (y == 0) {
+//        // clear;
+//        draw(x, y, bob2);
+//    }
+//}
+
+
+
+x : V0 = 32;
+y : V1 = 16;
 draw(x, y, bot_right);
-
-if (x == 32) {
-    if (y == 16) {
-        x : V0 = 16
-        y : V1 = 16
-        draw(x, y, bob);};}

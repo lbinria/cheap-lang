@@ -21,22 +21,25 @@ main:
   | expr_list EOF { $1 }
 
 expr_list:
-  | expr expr_terminator { Expr $1 }
-  | expr expr_terminator expr_list { ExprList ($1, $3) }
+  | expr { Expr $1 }
+  | expr expr_list { ExprList ($1, $2) }
 
 expr:
-  | CLEAR { Clear }
-  | assignment { Assignment $1 }
-  | binding { Binding $1 }
-  | DRAW_FN LPAREN var_or_value COMMA var_or_value COMMA VAR_NAME RPAREN { Draw ($3, $5, $7) }
+  | CLEAR expr_terminator { Clear }
+  | assignment expr_terminator { Assignment $1 }
+  | binding expr_terminator { Binding $1 }
+  | DRAW_FN LPAREN var_or_value COMMA var_or_value COMMA VAR_NAME RPAREN expr_terminator { Draw ($3, $5, $7) }
   | conditional_expr { Conditional_expr $1 }
 
+// expr_terminator_opt:
+//   | expr_terminator {}
+//   | {}
 
 expr_terminator:
   | SEMICOLON expr_terminator {}
-  | NEWLINE expr_terminator {}
+  // | NEWLINE expr_terminator {}
   | SEMICOLON {}
-  | NEWLINE {}
+  // | NEWLINE {}
 
 binding:
   | VAR_NAME COLON assignment { ($1, $3) }
@@ -51,6 +54,7 @@ parameter_binding:
 
 conditional_expr:
   | IF LPAREN bool_expr RPAREN expr { Single_statement ($3, $5) }
+  | IF LPAREN bool_expr RPAREN LBRACE expr RBRACE { Single_statement ($3, $6) }
   | IF LPAREN bool_expr RPAREN LBRACE expr_list RBRACE { Multi_statement ($3, $6) }
 
 bool_expr:

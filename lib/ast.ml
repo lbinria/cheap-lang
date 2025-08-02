@@ -223,22 +223,33 @@ and transform_bool_expr data = function
 let rec compile program_offset data sprite_ast (* default = 512 *) l =  
     (* offset of sprites in bytes *)
     let sprites_offset = (List.length l) * 2 (* Each instruction is 2 bytes *) in
+    Printf.printf "Sprites offset=%i\n" sprites_offset;
     (* Compile sprites *)
     let sprites_bytes_str = SpriteAst.get_bytes sprite_ast in 
     (* compute subroutines offset in bytes *)
-    let sprites_len = (String.length sprites_bytes_str) / 2 in
+    let sprites_len = (String.length sprites_bytes_str) / 2 (* Two chars = 1 byte *) in
     let subroutines_offset = sprites_offset + sprites_len in
+    Printf.printf "Subs offset=%i\n" subroutines_offset;
     
-    let compile_subroutine subroutine = String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) subroutine.instructions) in 
-    let subroutines_bytes_str = String.concat "" (List.map compile_subroutine !(data.subroutines)) in 
+    let compile_subroutine subroutine = 
+      String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) subroutine.instructions) 
+    in 
 
-    String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) l)
-    ^ sprites_bytes_str
-    ^ subroutines_bytes_str
+
+    (* Sort subroutines by offset *)
+    let sorted_subroutines = List.sort (fun a b -> compare a.offset b.offset) !(data.subroutines) in 
+
+
+
+    let subroutines_bytes_str = String.concat "" (List.map compile_subroutine sorted_subroutines) in 
+
+    let program_bytes_str = String.concat "" (List.map (compile_expr program_offset sprites_offset subroutines_offset) l) in 
+    
+    program_bytes_str ^ sprites_bytes_str ^ subroutines_bytes_str
 
 and compile_expr program_offset sprites_offset subroutines_offset = function 
   | CLS -> "00E0"
-  | RET -> Printf.printf "RETURN"; "00EE"
+  | RET -> "00EE"
   | JP nnn -> "1" ^ Printf.sprintf "%03x" (nnn + program_offset)
   | CALL nnn -> "2" ^ Printf.sprintf "%03x" (nnn + subroutines_offset + program_offset)
   | SE_Vx_Byte (x, kk) -> "3" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
@@ -275,4 +286,44 @@ and compile_expr program_offset sprites_offset subroutines_offset = function
 
   
   
+
+(* Compile chip AST (transform to hex string) *)
+let rec chip_to_string l =  
+    String.concat "\n" (List.map chip_to_string_expr l)
+
+and chip_to_string_expr = function 
+  | CLS -> "CLS"
+  | RET -> "RET"
+  | JP nnn -> "JP " ^ Printf.sprintf "%03x" nnn
+  | CALL nnn -> "CALL " ^ Printf.sprintf "%i" nnn
+  | SE_Vx_Byte (x, kk) -> "SE_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
+  | SNE_Vx_Byte (x, kk) -> "SNE_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
+  | SE_Vx_Vy (x, y) -> "SE_Vx_Vy " ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | LD_Vx_Byte (x, kk) -> "LD_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
+  | ADD_Vx_Byte (x, kk) -> "ADD_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
+  | LD_Vx_Vy (x, y) -> "LD_Vx_Vy " ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | OR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "1"
+  | AND_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "2"
+  | XOR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "3"
+  | ADD_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "4"
+  | SUB_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "5"
+  | SHR_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "6"
+  | SUBN_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "7"
+  | SHL_Vx_Vy (x, y) -> "8" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "E"
+  | SNE_Vx_Vy (x, y) -> "9" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%x" y ^ "0"
+  | LD_I_addr nnn -> "LD_I_addr " ^ Printf.sprintf "%i" nnn
+  | JP_V0_addr nnn -> "B" ^ Printf.sprintf "%03x" nnn
+  | RND_Vx_Byte (x, kk) -> "C" ^ Printf.sprintf "%x" x ^ Printf.sprintf "%02x" kk
+  | DRW (x, y, n) -> "DRW " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" y ^ "," ^ Printf.sprintf "%i" n
+  | SKP_Vx x -> "E" ^ Printf.sprintf "%x" x ^ "9E"
+  | SKNP_Vx x -> "E" ^ Printf.sprintf "%x" x ^ "A1"
+  | LD_Vx_DT x -> "F" ^ Printf.sprintf "%x" x ^ "07"
+  | LD_Vx_K x -> "F" ^ Printf.sprintf "%x" x ^ "0A"
+  | LD_DT_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "15" 
+  | LD_ST_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "18" 
+  | ADD_I_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "1E" 
+  | LD_F_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "29" 
+  | LD_B_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "33" 
+  | LD_I_Vx x -> "F" ^ Printf.sprintf "%x" x ^ "55" 
+  | LD_Vx_I x -> "F" ^ Printf.sprintf "%x" x ^ "65" 
 
