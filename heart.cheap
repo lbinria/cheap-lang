@@ -1,5 +1,9 @@
 clear;
 
+sub reset_xy {
+    x : V0 = 10;
+}
+
 x : V0 = 24; y : V1 = 8;
 draw(x, y, top_left);
 
@@ -11,6 +15,7 @@ draw(x, y, bot_left);
 
 if (x == 24) {
     draw(x, y, bob);
+    call reset_xy;
     x : V0 = 0;
     y : V1 = 0;
     draw(x, y, bob);

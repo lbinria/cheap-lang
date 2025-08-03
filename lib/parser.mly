@@ -7,7 +7,7 @@
 %token <string> VAR_NAME 
 %token <int> REGISTER
 %token EOF NEWLINE
-%token CLEAR DRAW_FN IF
+%token CLEAR DRAW_FN IF SUB SUB_CALL
 %token PLUS MINUS
 %left PLUS MINUS
 %token OP_ASS OP_EQ OP_NEQ
@@ -30,6 +30,8 @@ expr:
   | binding expr_terminator { Binding $1 }
   | DRAW_FN LPAREN var_or_value COMMA var_or_value COMMA VAR_NAME RPAREN expr_terminator { Draw ($3, $5, $7) }
   | conditional_expr { Conditional_expr $1 }
+  | SUB VAR_NAME LBRACE expr_list RBRACE { Subroutine ($2, $4) }
+  | SUB_CALL VAR_NAME expr_terminator { SubCall $2 }
 
 // expr_terminator_opt:
 //   | expr_terminator {}

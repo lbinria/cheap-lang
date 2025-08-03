@@ -16,6 +16,8 @@ and expr =
   | Assignment of assignment
   | Draw of var_or_value * var_or_value * var_name
   | Conditional_expr of conditional_expr
+  | Subroutine of var_name * expr_list
+  | SubCall of var_name
 
 and var_or_value =
   | Var of var_name
@@ -80,6 +82,7 @@ and chip_expr =
   | LD_Vx_I of register_num (* Fx65 *)
 
 type subroutine = {
+  name : string;
   offset: int;
   length: int;
   instructions: chip_expr list;
@@ -153,7 +156,38 @@ and transform_expr data = function
     )
 
   | Conditional_expr expr -> transform_conditional_expr data expr
+  | Subroutine (var_name, expr_list) -> 
+    (* Transform expr list *)
+    let converted_exprs = transform data expr_list in 
+    (* Compute subroutine offset according to the last subroutine *)
+    let last_subroutine_opt = List.nth_opt !(data.subroutines) 0 in 
 
+    let offset = 
+      match last_subroutine_opt with 
+      | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+      | None -> 0
+    in 
+
+    let subroutine = {
+      name = var_name;
+      offset = offset;
+      length = (List.length converted_exprs) + 1 (* Add RET *);
+      instructions = converted_exprs @ [RET];
+    } in 
+    Printf.printf "Add sub: %s\n" subroutine.name;
+    (* Add subroutines to the list *)
+    data.subroutines := subroutine :: !(data.subroutines);
+    (* No instructions to return *)
+    []
+  | SubCall var_name ->
+    (* Search subroutine with given name *)
+    Printf.printf "Call sub: %s\n" var_name;
+    let sub_offset = 
+      match List.find_opt (fun x -> x.name = var_name) !(data.subroutines) with 
+      | Some sub -> sub.offset
+      | None -> raise (UnbindVariable ("Unbind subroutine " ^ var_name ^ "."))
+    in 
+    [CALL sub_offset]
   | _ -> []
 
 and transform_conditional_expr data = function 
@@ -175,6 +209,7 @@ and transform_conditional_expr data = function
           Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1);
           
           let subroutine = {
+            name = "_anonymous";
             offset = offset;
             length = (List.length converted_exprs) + 1 (* Add RET *);
             instructions = converted_exprs @ [RET];
@@ -200,6 +235,7 @@ and transform_conditional_expr data = function
           Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1);
           
           let subroutine = {
+            name = "_anonymous";
             offset = offset;
             length = (List.length converted_exprs) + 1 (* Add RET *);
             instructions = converted_exprs @ [RET];

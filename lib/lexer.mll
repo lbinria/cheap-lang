@@ -20,6 +20,8 @@ rule token = parse
   | "clear"       { CLEAR }
   | "draw"        { DRAW_FN }
   | "if"        { IF }
+  | "sub"        { SUB }
+  | "call"        { SUB_CALL }
 
   (* | register as n { REGISTER (int_of_string n) } *)
   | "V" ( ['0'-'9'] | "1"[ '0'-'6' ] as n)  { REGISTER (int_of_string n) }
