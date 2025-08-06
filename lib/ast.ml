@@ -229,7 +229,7 @@ and transform_conditional_expr data = function
 
           let offset = 
             match last_subroutine_opt with 
-            | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+            | Some last_subroutine -> last_subroutine.offset + (last_subroutine.length * 2)
             | None -> 0
           in 
 

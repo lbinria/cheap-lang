@@ -24,7 +24,8 @@ x : V0 = 32;
 draw(x, y, bot_right);
 
 if (x == 32) {
-    if (y == 17) {
+    if (y == 16) {
         call reset_xy;
+        draw(x, y, cross);
     }
 }
