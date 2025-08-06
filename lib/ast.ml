@@ -164,7 +164,7 @@ and transform_expr data = function
 
     let offset = 
       match last_subroutine_opt with 
-      | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+      | Some last_subroutine -> last_subroutine.offset + (last_subroutine.length * 2)
       | None -> 0
     in 
 
@@ -187,6 +187,7 @@ and transform_expr data = function
       | Some sub -> sub.offset
       | None -> raise (UnbindVariable ("Unbind subroutine " ^ var_name ^ "."))
     in 
+    Printf.printf "Sub offset is: %i\n" sub_offset;
     [CALL sub_offset]
   | _ -> []
 
@@ -202,7 +203,7 @@ and transform_conditional_expr data = function
 
           let offset = 
             match last_subroutine_opt with 
-            | Some last_subroutine -> last_subroutine.offset + last_subroutine.length
+            | Some last_subroutine -> last_subroutine.offset + (last_subroutine.length * 2)
             | None -> 0
           in 
 
@@ -330,7 +331,7 @@ let rec chip_to_string l =
 and chip_to_string_expr = function 
   | CLS -> "CLS"
   | RET -> "RET"
-  | JP nnn -> "JP " ^ Printf.sprintf "%03x" nnn
+  | JP nnn -> "JP " ^ Printf.sprintf "%i" nnn
   | CALL nnn -> "CALL " ^ Printf.sprintf "%i" nnn
   | SE_Vx_Byte (x, kk) -> "SE_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
   | SNE_Vx_Byte (x, kk) -> "SNE_Vx_Byte " ^ Printf.sprintf "%i" x ^ "," ^ Printf.sprintf "%i" kk
