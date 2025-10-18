@@ -13,6 +13,7 @@
 %token OP_ASS OP_EQ OP_NEQ
 %token LPAREN RPAREN LBRACE RBRACE LSQBRA RSQBRA
 %token COLON SEMICOLON COMMA
+%token CLOCK
 
 %start <Ast.expr_list> main
 %%
@@ -47,12 +48,12 @@ binding:
   | VAR_NAME COLON assignment { ($1, $3) }
 
 assignment:
+  | CLOCK OP_ASS REGISTER { ClockAssignment $3 }
   | REGISTER OP_ASS INT { RegAssignment ($1, $3) }
   | VAR_NAME OP_ASS INT { VarAssignment ($1, $3) }
+  // TODO add register_or_var OP_ASS register_or_var  
 
-(* TODO a voir *)
-parameter_binding:
-  | var_or_value COLON assignment {}
+
 
 conditional_expr:
   | IF LPAREN bool_expr RPAREN expr { Single_statement ($3, $5) }
@@ -62,6 +63,10 @@ conditional_expr:
 bool_expr:
   | var_or_value OP_EQ var_or_value { Eq ($1, $3) }
   | var_or_value OP_NEQ var_or_value { Neq ($1, $3) }
+
+register_or_varname:
+  | REGISTER { Var $1 } // TODO replace by VarName / Reg
+  | VAR_NAME { Var $1 }
 
 var_or_value:
   | VAR_NAME { Var $1 }

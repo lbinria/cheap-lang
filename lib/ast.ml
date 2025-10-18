@@ -19,6 +19,10 @@ and expr =
   | Subroutine of var_name * expr_list
   | SubCall of var_name
 
+and register_or_var = 
+  | VarName of var_name
+  | Reg of var_name
+
 and var_or_value =
   | Var of var_name
   | Val of int
@@ -26,6 +30,7 @@ and var_or_value =
 and assignment =
   | RegAssignment of register_num * int
   | VarAssignment of var_name * int
+  | ClockAssignment of register_num
 
 and conditional_expr = 
   | Single_statement of bool_expr * expr
@@ -132,6 +137,8 @@ and transform_expr data = function
           let reg = get_reg_of_var data var in 
           Array.set data.registers reg v;
           [LD_Vx_Byte (reg, v)]
+      | ClockAssignment reg ->
+          [LD_DT_Vx reg]
       )
   
   | Draw (x_param, y_param, sprite_name) -> 

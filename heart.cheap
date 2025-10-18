@@ -23,6 +23,8 @@ draw(x, y, bot_left);
 x : V0 = 32;
 draw(x, y, bot_right);
 
+clock = V0;
+
 if (x == 32) {
     if (y == 16) {
         call reset_xy;
