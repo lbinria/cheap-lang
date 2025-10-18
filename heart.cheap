@@ -33,6 +33,7 @@ if (x == 32) {
 }
 
 
-while (x == 32) {
-    call reset_xy;
+while (x == 0) {
+    x : V0 = 12;
+    draw(x, y, cross);
 }

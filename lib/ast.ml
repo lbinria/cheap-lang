@@ -164,6 +164,7 @@ and transform_expr data = function
     )
 
   | Conditional_expr expr -> transform_conditional_expr data expr
+  | While_expr expr -> transform_while_expr data expr
   | Subroutine (var_name, expr_list) -> 
     (* Transform expr list *)
     let converted_exprs = transform data expr_list in 
@@ -202,7 +203,7 @@ and transform_expr data = function
 and transform_conditional_expr data = function 
   | Single_statement (bool_expr, expr) -> 
       let converted_exprs = transform_expr data expr in 
-      let plop = 
+      let single_instr_or_call = 
         match (List.length converted_exprs) with 
         | 1 -> List.nth converted_exprs 0
         | _ -> 
@@ -228,7 +229,7 @@ and transform_conditional_expr data = function
           (* let data = { data with subroutines = subroutine :: data.subroutines } in  *)
           CALL offset
       in 
-      [transform_bool_expr data bool_expr; plop]
+      [transform_bool_expr data bool_expr; single_instr_or_call]
   | Multi_statement (bool_expr, expr_list) ->
       let converted_exprs = transform data expr_list in 
       let plop = 
@@ -255,6 +256,36 @@ and transform_conditional_expr data = function
           CALL offset
       in 
       [transform_bool_expr data bool_expr; plop]
+
+and transform_while_expr data = function 
+  (* TODO below isn't well implemented, but I have to see to remove the single statement as it seems useless... *)
+  | Single_statement _ -> [] 
+  | Multi_statement (bool_expr, expr_list) ->
+      let converted_exprs = transform data expr_list in 
+      (* TODO compute offset *)
+      let last_subroutine_opt = List.nth_opt !(data.subroutines) 0 in 
+
+      let offset = 
+        match last_subroutine_opt with 
+        | Some last_subroutine -> last_subroutine.offset + (last_subroutine.length * 2)
+        | None -> 0
+      in 
+
+      (* Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1); *)
+      
+      (* Test inverse of the condition at the end of subroutine *)
+      (* If inverse condition is true SKIP the jump => exit loop *)
+      (* else jump to the beginning of the subroutine *)
+      let subroutine = {
+        name = "_anonymous";
+        offset = offset;
+        length = (List.length converted_exprs) + 1 (* Add RET *);
+        instructions = converted_exprs @ [transform_bool_expr data bool_expr; JP offset];
+      } in 
+
+      data.subroutines := subroutine :: !(data.subroutines);
+      [CALL offset]
+      
 
 and transform_bool_expr data = function 
   | Eq (Var vx, Val v) -> SNE_Vx_Byte (get_reg_of_var data vx, v)
