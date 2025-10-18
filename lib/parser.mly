@@ -7,7 +7,7 @@
 %token <string> VAR_NAME 
 %token <int> REGISTER
 %token EOF NEWLINE
-%token CLEAR DRAW_FN IF SUB SUB_CALL
+%token CLEAR DRAW_FN IF WHILE SUB SUB_CALL
 %token PLUS MINUS
 %left PLUS MINUS
 %token OP_ASS OP_EQ OP_NEQ
@@ -53,7 +53,8 @@ assignment:
   | VAR_NAME OP_ASS INT { VarAssignment ($1, $3) }
   // TODO add register_or_var OP_ASS register_or_var  
 
-
+while_expr:
+  | WHILE LPAREN bool_expr RPAREN LBRACE expr_list RBRACE { Multi_statement ($3, $6) }
 
 conditional_expr:
   | IF LPAREN bool_expr RPAREN expr { Single_statement ($3, $5) }

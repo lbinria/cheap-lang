@@ -20,6 +20,7 @@ rule token = parse
   | "clear"       { CLEAR }
   | "draw"        { DRAW_FN }
   | "if"        { IF }
+  | "while"        { WHILE }
   | "sub"        { SUB }
   | "call"        { SUB_CALL }
   | "clock"        { CLOCK }
