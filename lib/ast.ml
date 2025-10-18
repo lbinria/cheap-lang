@@ -16,6 +16,7 @@ and expr =
   | Assignment of assignment
   | Draw of var_or_value * var_or_value * var_name
   | Conditional_expr of conditional_expr
+  | While_expr of conditional_expr
   | Subroutine of var_name * expr_list
   | SubCall of var_name
 

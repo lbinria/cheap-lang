@@ -17,6 +17,7 @@ rule token = parse
   | '+'           { PLUS }
   | '-'           { MINUS }
   (* Keywords *)
+  | "loop"        { LOOP }
   | "clear"       { CLEAR }
   | "draw"        { DRAW_FN }
   | "if"        { IF }

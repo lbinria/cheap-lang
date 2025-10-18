@@ -31,3 +31,8 @@ if (x == 32) {
         draw(x, y, cross);
     }
 }
+
+
+while (x == 32) {
+    call reset_xy;
+}
