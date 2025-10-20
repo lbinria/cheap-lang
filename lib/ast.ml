@@ -40,6 +40,7 @@ and conditional_expr =
 and bool_expr = 
   | Eq of var_or_value * var_or_value
   | Neq of var_or_value * var_or_value
+  | True
 
 and variable_binding = var_name * assignment
 
@@ -229,7 +230,7 @@ and transform_conditional_expr data = function
           (* let data = { data with subroutines = subroutine :: data.subroutines } in  *)
           CALL offset
       in 
-      [transform_bool_expr data bool_expr; single_instr_or_call]
+      (transform_bool_expr data bool_expr) @ [single_instr_or_call]
   | Multi_statement (bool_expr, expr_list) ->
       let converted_exprs = transform data expr_list in 
       let plop = 
@@ -255,10 +256,10 @@ and transform_conditional_expr data = function
           (* let data = { data with subroutines = subroutine :: data.subroutines } in  *)
           CALL offset
       in 
-      [transform_bool_expr data bool_expr; plop]
+      (transform_bool_expr data bool_expr) @ [plop]
 
 and transform_while_expr data = function 
-  (* TODO below isn't well implemented, but I have to see to remove the single statement as it seems useless... *)
+  (* TODO IMPORTANT below isn't well implemented, but I have to see to remove the single statement as it seems useless... *)
   | Single_statement _ -> [] 
   | Multi_statement (bool_expr, expr_list) ->
       let converted_exprs = transform data expr_list in 
@@ -273,14 +274,17 @@ and transform_while_expr data = function
 
       (* Printf.printf "Subroutine offset: %i, length: %i\n" offset ((List.length converted_exprs) + 1); *)
       
+
+      let sub_instructions = converted_exprs @ (transform_bool_expr data bool_expr) @ [JP offset] in 
+
       (* Test inverse of the condition at the end of subroutine *)
       (* If inverse condition is true SKIP the jump => exit loop *)
       (* else jump to the beginning of the subroutine *)
       let subroutine = {
         name = "_anonymous";
         offset = offset;
-        length = (List.length converted_exprs) + 1 (* Add RET *);
-        instructions = converted_exprs @ [transform_bool_expr data bool_expr; JP offset];
+        length = List.length sub_instructions;
+        instructions = sub_instructions;
       } in 
 
       data.subroutines := subroutine :: !(data.subroutines);
@@ -288,10 +292,11 @@ and transform_while_expr data = function
       
 
 and transform_bool_expr data = function 
-  | Eq (Var vx, Val v) -> SNE_Vx_Byte (get_reg_of_var data vx, v)
-  | Eq (Var vx, Var vy) -> SNE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)
-  | Neq (Var vx, Val v) -> SE_Vx_Byte (get_reg_of_var data vx, v)
-  | Neq (Var vx, Var vy) -> SE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)
+  | Eq (Var vx, Val v) -> [SNE_Vx_Byte (get_reg_of_var data vx, v)]
+  | Eq (Var vx, Var vy) -> [SNE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)]
+  | Neq (Var vx, Val v) -> [SE_Vx_Byte (get_reg_of_var data vx, v)]
+  | Neq (Var vx, Var vy) -> [SE_Vx_Vy (get_reg_of_var data vx, get_reg_of_var data vy)]
+  | True -> []
   | _ -> raise (MalformedCondition ("Cannot compare two values in condition."))
 
     

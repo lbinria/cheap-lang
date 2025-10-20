@@ -7,7 +7,7 @@
 %token <string> VAR_NAME 
 %token <int> REGISTER
 %token EOF NEWLINE
-%token CLEAR DRAW_FN LOOP IF WHILE SUB SUB_CALL
+%token CLEAR DRAW_FN TRUE IF WHILE SUB SUB_CALL
 %token PLUS MINUS
 %left PLUS MINUS
 %token OP_ASS OP_EQ OP_NEQ
@@ -65,6 +65,7 @@ conditional_expr:
 bool_expr:
   | var_or_value OP_EQ var_or_value { Eq ($1, $3) }
   | var_or_value OP_NEQ var_or_value { Neq ($1, $3) }
+  | TRUE { True }
 
 register_or_varname:
   | REGISTER { Var $1 } // TODO replace by VarName / Reg

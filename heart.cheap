@@ -33,7 +33,7 @@ if (x == 32) {
 }
 
 
-while (x == 0) {
+if (true) {
     x : V0 = 12;
     draw(x, y, cross);
 }
